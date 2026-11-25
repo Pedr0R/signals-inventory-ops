@@ -1,0 +1,28 @@
+<section class="panel-card" aria-label="Inspetor de Reatividade Signals">
+  <header class="panel-header">
+    <div>
+      <h2 class="panel-title">Linha do Tempo Reativa</h2>
+      <p class="panel-subtitle">
+        Rastreio em tempo real de
+        <span class="sig-pill sig-signal">signal</span>
+        <span class="sig-pill sig-computed">computed</span>
+        <span class="sig-pill sig-linkedSignal">linkedSignal</span>
+        <span class="sig-pill sig-resource">resource</span>
+        <span class="sig-pill sig-effect">effect</span>
+      </p>
+    </div>
+    <span class="sync-badge" [class.sync-active]="liveSyncEnabled()">
+      {{ liveSyncEnabled() ? 'Armazém ao vivo ativo' : 'Armazém manual' }}
+    </span>
+  </header>
+
+  <ul class="events-feed">
+    @for (evt of events(); track evt.id) {
+      <li class="event-row">
+        <span class="event-time">{{ formatTimestamp(evt.timestampIso) }}</span>
+        <span class="sig-pill" [class]="'sig-pill sig-' + evt.primitive">{{ evt.primitive }}</span>
+        <span class="event-summary">{{ evt.summary }}</span>
+      </li>
+    }
+  </ul>
+</section>

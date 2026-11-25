@@ -1,0 +1,180 @@
+<section class="panel-card" aria-label="Montagem de Pedido">
+  <header class="panel-header">
+    <div>
+      <h2 class="panel-title">Pedido em Montagem</h2>
+      <p class="panel-subtitle">Precificação reativa e validação automática de estoque</p>
+    </div>
+    @if (lines().length > 0) {
+      <button type="button" class="btn btn-sm btn-ghost" (click)="clearCart.emit()">
+        Limpar carrinho
+      </button>
+    }
+  </header>
+
+  @if (hasConflicts()) {
+    <div class="alert-banner conflict-banner" role="alert">
+      Conflito de estoque detectado! Ajuste a quantidade do item sinalizado ou reponha o saldo no catálogo.
+    </div>
+  }
+
+  @if (lines().length === 0) {
+    <div class="empty-cart">
+      Seu rascunho de pedido está vazio. Adicione itens pelo catálogo ao lado.
+    </div>
+  } @else {
+    <ul class="cart-list">
+      @for (line of lines(); track line.product.id) {
+        <li class="cart-item" [class.cart-item-conflict]="line.hasStockConflict">
+          <div class="cart-item-info">
+            <strong class="cart-item-name">{{ line.product.name }}</strong>
+            <span class="cart-item-meta">
+              {{ line.product.sku }} · Disponível: {{ line.availableQuantity }} un.
+            </span>
+            @if (line.hasStockConflict) {
+              <span class="conflict-text">
+                Solicitado ({{ line.requestedQuantity }}) excede estoque ({{ line.availableQuantity }})
+              </span>
+            }
+          </div>
+
+          <div class="cart-item-controls">
+            <app-quantity-stepper
+              [value]="line.requestedQuantity"
+              [max]="maxSelectable(line.availableQuantity)"
+              (valueChange)="onLineQuantityChange(line.product.id, $event)"
+            />
+            <strong class="line-subtotal">{{ formatPrice(line.lineSubtotalCents) }}</strong>
+            <button
+              type="button"
+              class="btn btn-sm btn-ghost"
+              (click)="removeItem.emit(line.product.id)"
+              [attr.aria-label]="'Remover ' + line.product.name"
+            >
+              Remover
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+
+  <div class="order-form">
+    <label class="field-group">
+      <span class="field-label">Cliente / Centro de Custo</span>
+      <input
+        type="text"
+        class="field-control"
+        [value]="customerName()"
+        (input)="onCustomerInput($event)"
+        placeholder="Mínimo 3 caracteres"
+      />
+    </label>
+
+    <div class="two-cols">
+      <label class="field-group">
+        <span class="field-label">
+          Região de Entrega
+          <span class="sig-pill sig-linkedSignal">linkedSignal</span>
+        </span>
+        <select class="field-control" [value]="selectedRegion()" (change)="onRegionChange($event)">
+          <option value="sudeste">Sudeste (aceita Mesmo Dia)</option>
+          <option value="sul">Sul (aceita Mesmo Dia)</option>
+          <option value="centro-oeste">Centro-Oeste</option>
+          <option value="nordeste">Nordeste</option>
+          <option value="norte">Norte</option>
+        </select>
+      </label>
+
+      <label class="field-group">
+        <span class="field-label">Cupom Promocional</span>
+        <input
+          type="text"
+          class="field-control"
+          [value]="couponInput()"
+          (input)="onCouponInputChange($event)"
+          placeholder="Ex: SIGNALS10"
+        />
+      </label>
+    </div>
+
+    <div class="coupon-chips" aria-label="Cupons disponíveis">
+      @for (code of quickCoupons; track code) {
+        <button
+          type="button"
+          class="chip-btn"
+          [class.chip-active]="couponInput().trim().toUpperCase() === code"
+          (click)="couponInput.set(code)"
+        >
+          {{ code }}
+        </button>
+      }
+      @if (couponInput()) {
+        <button type="button" class="chip-btn" (click)="couponInput.set('')">Sem cupom</button>
+      }
+    </div>
+
+    @if (pricing().couponError) {
+      <p class="coupon-error" role="status">{{ pricing().couponError }}</p>
+    }
+
+    <div class="shipping-grid" role="radiogroup" aria-label="Modalidade de entrega">
+      @for (option of shippingOptions(); track option.tier) {
+        <button
+          type="button"
+          class="shipping-card"
+          [class.shipping-selected]="selectedShippingTier() === option.tier"
+          (click)="selectedShippingTier.set(option.tier)"
+        >
+          <span class="shipping-title">{{ option.label }}</span>
+          <span class="shipping-days">{{ option.estimatedDays }}</span>
+          <strong class="shipping-fee">{{ formatPrice(option.feeCents) }}</strong>
+        </button>
+      }
+    </div>
+  </div>
+
+  <dl class="pricing-summary">
+    <div class="summary-row">
+      <dt>Subtotal</dt>
+      <dd>{{ formatPrice(pricing().subtotalCents) }}</dd>
+    </div>
+    @if (pricing().volumeDiscountCents > 0) {
+      <div class="summary-row discount-row">
+        <dt>Desconto volume (5% &ge; R$ 2.500)</dt>
+        <dd>-{{ formatPrice(pricing().volumeDiscountCents) }}</dd>
+      </div>
+    }
+    @if (pricing().couponDiscountCents > 0) {
+      <div class="summary-row discount-row">
+        <dt>Cupom ({{ pricing().appliedCoupon }})</dt>
+        <dd>-{{ formatPrice(pricing().couponDiscountCents) }}</dd>
+      </div>
+    }
+    <div class="summary-row">
+      <dt>
+        Frete
+        @if (pricing().qualifiesForFreeShipping) {
+          <span class="free-tag">Grátis</span>
+        }
+      </dt>
+      <dd>{{ formatPrice(pricing().shippingFeeCents) }}</dd>
+    </div>
+    <div class="summary-row">
+      <dt>Impostos (8%)</dt>
+      <dd>{{ formatPrice(pricing().taxCents) }}</dd>
+    </div>
+    <div class="summary-row summary-total">
+      <dt>Total do Pedido</dt>
+      <dd>{{ formatPrice(pricing().grandTotalCents) }}</dd>
+    </div>
+  </dl>
+
+  <button
+    type="button"
+    class="btn btn-primary submit-btn"
+    [disabled]="!canSubmit()"
+    (click)="submitOrder.emit()"
+  >
+    Emitir Pedido e Consultar Rastreamento
+  </button>
+</section>

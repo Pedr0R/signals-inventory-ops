@@ -1,0 +1,27 @@
+<section class="metrics-grid" aria-label="Indicadores operacionais">
+  <article class="metric-card">
+    <span class="metric-label">SKUs / Unidades</span>
+    <strong class="metric-value">{{ metrics().totalSkus }} SKUs · {{ metrics().totalUnits }} un.</strong>
+    <span class="sig-pill sig-computed">computed</span>
+  </article>
+
+  <article class="metric-card">
+    <span class="metric-label">Valor em Estoque</span>
+    <strong class="metric-value">{{ formattedValuation() }}</strong>
+    <span class="sig-pill sig-computed">computed</span>
+  </article>
+
+  <article class="metric-card" [class.metric-warn]="metrics().lowStockCount + metrics().outOfStockCount > 0">
+    <span class="metric-label">Alertas de Reposição</span>
+    <strong class="metric-value">
+      {{ metrics().lowStockCount }} baixo · {{ metrics().outOfStockCount }} zerado
+    </strong>
+    <span class="sig-pill sig-computed">computed</span>
+  </article>
+
+  <article class="metric-card" [class.metric-danger]="hasConflicts()">
+    <span class="metric-label">Receita Emitida / Carrinho</span>
+    <strong class="metric-value">{{ formattedRevenue() }} · {{ cartCount() }} no pedido</strong>
+    <span class="sig-pill sig-computed">computed</span>
+  </article>
+</section>

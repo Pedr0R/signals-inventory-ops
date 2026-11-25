@@ -1,0 +1,83 @@
+@if (products().length === 0) {
+  <div class="empty-catalog">
+    <p>Nenhum produto encontrado para os filtros atuais.</p>
+  </div>
+} @else {
+  <div class="catalog-grid">
+    @for (item of products(); track item.id) {
+      <article class="product-card" [attr.data-sku]="item.sku">
+        <div class="product-top">
+          <span class="sku-tag">{{ item.sku }} · {{ item.warehouseZone }}</span>
+          <span class="badge" [class]="'badge badge-' + statusOf(item)">
+            {{ statusLabel(item) }} ({{ item.stockQuantity }})
+          </span>
+        </div>
+
+        <h3 class="product-name">{{ item.name }}</h3>
+
+        <div class="product-meta">
+          <strong class="product-price">{{ formatPrice(item.unitPriceCents) }}</strong>
+          @if (quantityInCart(item.id) > 0) {
+            <span class="in-cart-tag">{{ quantityInCart(item.id) }} no pedido</span>
+          }
+        </div>
+
+        <div class="product-actions">
+          <div class="stock-controls" aria-label="Simular movimentação de estoque">
+            <button
+              type="button"
+              class="btn btn-sm btn-ghost"
+              [disabled]="item.stockQuantity <= 0"
+              (click)="adjustStock.emit({ productId: item.id, delta: -1 })"
+              title="Simular saída de 1 unidade do armazém"
+            >
+              -1 est.
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-ghost"
+              (click)="adjustStock.emit({ productId: item.id, delta: 5 })"
+              title="Simular reposição de 5 unidades"
+            >
+              +5 est.
+            </button>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-sm btn-primary"
+            [disabled]="!canAddMore(item)"
+            (click)="addToCart.emit(item.id)"
+          >
+            {{ item.stockQuantity <= 0 ? 'Sem saldo' : 'Adicionar' }}
+          </button>
+        </div>
+      </article>
+    }
+  </div>
+}
+
+<footer class="pagination-bar" aria-label="Paginação do catálogo">
+  <span class="pagination-info">
+    {{ totalMatches() }} item(ns) · Página {{ currentPage() }} de {{ totalPages() }}
+    <span class="sig-pill sig-linkedSignal">linkedSignal</span>
+  </span>
+  <div class="pagination-buttons">
+    <button
+      type="button"
+      class="btn btn-sm"
+      [disabled]="currentPage() <= 1"
+      (click)="pageChange.emit(currentPage() - 1)"
+    >
+      Anterior
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm"
+      [disabled]="currentPage() >= totalPages()"
+      (click)="pageChange.emit(currentPage() + 1)"
+    >
+      Próxima
+    </button>
+  </div>
+</footer>

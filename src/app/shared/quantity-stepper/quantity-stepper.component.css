@@ -1,0 +1,22 @@
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.18rem;
+}
+
+.stepper-btn {
+  min-width: 1.7rem;
+  padding: 0.16rem 0.42rem;
+}
+
+.stepper-value {
+  min-width: 1.6rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.84rem;
+  font-weight: 600;
+}

@@ -1,0 +1,42 @@
+<div class="toolbar" role="search" aria-label="Filtros do catálogo">
+  <div class="search-box">
+    <input
+      #searchInput
+      type="search"
+      class="field-control"
+      placeholder="Buscar por nome, SKU ou corredor..."
+      [value]="searchQuery()"
+      (input)="onSearchChange($event)"
+      aria-label="Buscar produtos"
+    />
+    <button type="button" class="btn btn-sm btn-ghost" (click)="focusSearch()" title="Focar campo via viewChild()">
+      Focar
+    </button>
+  </div>
+
+  <select class="field-control" [value]="category()" (change)="onCategoryChange($event)" aria-label="Filtrar por categoria">
+    <option value="all">Todas categorias</option>
+    <option value="hardware">Hardware</option>
+    <option value="redes">Redes</option>
+    <option value="armazenamento">Armazenamento</option>
+    <option value="perifericos">Periféricos</option>
+  </select>
+
+  <select class="field-control" [value]="stockStatus()" (change)="onStockChange($event)" aria-label="Filtrar por estoque">
+    <option value="all">Todo estoque</option>
+    <option value="in-stock">Em estoque</option>
+    <option value="low-stock">Estoque baixo</option>
+    <option value="out-of-stock">Esgotado</option>
+  </select>
+
+  <select class="field-control" [value]="sortBy()" (change)="onSortChange($event)" aria-label="Ordenar produtos">
+    <option value="name">Ordenar: Nome (A–Z)</option>
+    <option value="price-asc">Menor preço</option>
+    <option value="price-desc">Maior preço</option>
+    <option value="stock-desc">Maior estoque</option>
+  </select>
+
+  <button type="button" class="btn btn-ghost" (click)="clearRequested.emit()">
+    Limpar
+  </button>
+</div>

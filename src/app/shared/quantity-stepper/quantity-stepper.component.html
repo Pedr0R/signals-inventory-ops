@@ -1,0 +1,21 @@
+<div class="stepper" role="group" aria-label="Controle de quantidade">
+  <button
+    type="button"
+    class="btn btn-sm stepper-btn"
+    [disabled]="!canDecrement()"
+    (click)="decrement()"
+    aria-label="Diminuir quantidade"
+  >
+    -
+  </button>
+  <span class="stepper-value" data-testid="stepper-value">{{ value() }}</span>
+  <button
+    type="button"
+    class="btn btn-sm stepper-btn"
+    [disabled]="!canIncrement()"
+    (click)="increment()"
+    aria-label="Aumentar quantidade"
+  >
+    +
+  </button>
+</div>

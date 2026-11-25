@@ -1,0 +1,110 @@
+<div class="app-shell">
+  <header class="topbar">
+    <div>
+      <div class="brand-row">
+        <h1 class="brand-title">SignalOrder</h1>
+        <span class="zoneless-tag">Angular 21 · Zoneless Signals</span>
+      </div>
+      <p class="brand-subtitle">
+        Painel de Gestão de Pedidos, Carrinho Inteligente e Controle de Estoque em Tempo Real
+      </p>
+    </div>
+
+    <div class="topbar-actions">
+      <button
+        type="button"
+        class="btn"
+        [class.btn-primary]="store.liveWarehouseSync()"
+        (click)="store.toggleLiveWarehouseSync()"
+      >
+        {{ store.liveWarehouseSync() ? 'Pausar Armazém ao Vivo' : 'Simular Armazém ao Vivo' }}
+      </button>
+      <button type="button" class="btn btn-ghost" (click)="store.resetDemoState()">
+        Restaurar Demo
+      </button>
+    </div>
+  </header>
+
+  <app-metrics-strip
+    [metrics]="store.inventoryMetrics()"
+    [cartCount]="store.cartItemCount()"
+    [totalRevenueCents]="store.totalRevenueCents()"
+    [hasConflicts]="store.hasStockConflicts()"
+  />
+
+  <main class="workspace-grid">
+    <section class="panel-card" aria-label="Catálogo de Estoque">
+      <header class="panel-header">
+        <div>
+          <h2 class="panel-title">Catálogo & Saldo de Armazém</h2>
+          <p class="panel-subtitle">
+            Filtros reativos com <span class="sig-pill sig-model">model()</span> e paginação automática
+          </p>
+        </div>
+      </header>
+
+      <app-catalog-toolbar
+        [searchQuery]="store.searchQuery()"
+        (searchQueryChange)="store.setSearchQuery($event)"
+        [category]="store.selectedCategory()"
+        (categoryChange)="store.setCategory($event)"
+        [stockStatus]="store.stockFilter()"
+        (stockStatusChange)="store.setStockFilter($event)"
+        [sortBy]="store.sortBy()"
+        (sortByChange)="store.setSortBy($event)"
+        (clearRequested)="store.clearFilters()"
+      />
+
+      <app-product-catalog
+        [products]="store.paginatedCatalog()"
+        [totalMatches]="store.filteredCatalog().length"
+        [currentPage]="store.currentPage()"
+        [totalPages]="store.totalPages()"
+        [cartQuantities]="store.cartQuantityMap()"
+        (addToCart)="store.addToCart($event)"
+        (adjustStock)="onAdjustStock($event)"
+        (pageChange)="store.setPage($event)"
+      />
+    </section>
+
+    <app-order-builder
+      [lines]="store.cartLines()"
+      [pricing]="store.pricing()"
+      [hasConflicts]="store.hasStockConflicts()"
+      [canSubmit]="store.canSubmitOrder()"
+      [shippingOptions]="store.availableShippingOptions()"
+      [customerName]="store.customerName()"
+      (customerNameChange)="store.setCustomerName($event)"
+      [couponInput]="store.couponInput()"
+      (couponInputChange)="store.setCouponInput($event)"
+      [selectedRegion]="store.selectedRegion()"
+      (selectedRegionChange)="store.setRegion($event)"
+      [selectedShippingTier]="store.selectedShippingTier()"
+      (selectedShippingTierChange)="store.setShippingTier($event)"
+      (quantityChange)="onCartQuantityChange($event)"
+      (removeItem)="store.removeFromCart($event)"
+      (clearCart)="store.clearCart()"
+      (submitOrder)="onSubmitOrder()"
+    />
+  </main>
+
+  <section class="bottom-grid">
+    <app-order-tracker
+      [orders]="store.orders()"
+      [selectedOrderId]="store.selectedOrderId()"
+      [resourceStatus]="store.orderTrackingResource.status()"
+      [isLoading]="store.orderTrackingResource.isLoading()"
+      [errorMessage]="trackingErrorMessage()"
+      [trackingDetails]="trackingDetails()"
+      [simulateFailure]="store.simulateTrackingFailure()"
+      (selectOrder)="store.selectOrder($event)"
+      (reloadTracking)="store.reloadOrderTracking()"
+      (toggleFailure)="store.toggleSimulateTrackingFailure()"
+    />
+
+    <app-reactivity-inspector
+      [events]="store.activityLog()"
+      [liveSyncEnabled]="store.liveWarehouseSync()"
+    />
+  </section>
+</div>

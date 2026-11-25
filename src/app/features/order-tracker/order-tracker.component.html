@@ -1,0 +1,90 @@
+<section class="panel-card" aria-label="Rastreamento assíncrono de pedidos">
+  <header class="panel-header">
+    <div>
+      <h2 class="panel-title">
+        Pedidos Emitidos & Rastreamento
+        <span class="sig-pill sig-resource">resource()</span>
+      </h2>
+      <p class="panel-subtitle">
+        Estado atual: <strong>{{ resourceStatus() }}</strong> · Cancelamento automático via AbortSignal
+      </p>
+    </div>
+
+    <div class="tracker-controls">
+      <label class="failure-toggle">
+        <input type="checkbox" [checked]="simulateFailure()" (change)="toggleFailure.emit()" />
+        <span>Simular falha de rede</span>
+      </label>
+      <button type="button" class="btn btn-sm" (click)="reloadTracking.emit()">
+        Recarregar (reload)
+      </button>
+    </div>
+  </header>
+
+  <div class="tracker-layout">
+    <ul class="orders-list" aria-label="Histórico de pedidos">
+      @for (order of orders(); track order.id) {
+        <li>
+          <button
+            type="button"
+            class="order-btn"
+            [class.order-selected]="selectedOrderId() === order.id"
+            (click)="selectOrder.emit(order.id)"
+          >
+            <div class="order-btn-top">
+              <strong>{{ order.id }}</strong>
+              <span>{{ formatPrice(order.totalCents) }}</span>
+            </div>
+            <span class="order-btn-sub">
+              {{ order.customerName }} · {{ order.region.toUpperCase() }} ({{ order.shippingTier }})
+            </span>
+          </button>
+        </li>
+      }
+    </ul>
+
+    <div class="tracking-detail-box">
+      @if (isLoading()) {
+        <div class="loading-box" role="status">
+          Consultando serviço logístico assíncrono...
+        </div>
+      } @else if (errorMessage(); as errorText) {
+        <div class="alert-banner" role="alert">
+          <p class="error-msg">{{ errorText }}</p>
+          <button type="button" class="btn btn-sm" (click)="reloadTracking.emit()">
+            Tentar novamente
+          </button>
+        </div>
+      } @else if (trackingDetails(); as details) {
+        <div class="tracking-meta">
+          <div>
+            <span class="meta-kicker">Transportadora</span>
+            <strong>{{ details.carrier }}</strong>
+          </div>
+          <div>
+            <span class="meta-kicker">Código</span>
+            <strong>{{ details.trackingCode }}</strong>
+          </div>
+          <div>
+            <span class="meta-kicker">Previsão</span>
+            <strong>{{ details.estimatedDelivery }}</strong>
+          </div>
+        </div>
+
+        <ol class="timeline">
+          @for (evt of details.events; track evt.timestampIso) {
+            <li class="timeline-item">
+              <span class="timeline-time">{{ formatTime(evt.timestampIso) }}</span>
+              <div>
+                <strong>{{ evt.location }}</strong>
+                <p class="timeline-desc">{{ evt.description }}</p>
+              </div>
+            </li>
+          }
+        </ol>
+      } @else {
+        <p class="empty-tracking">Selecione um pedido para inspecionar o rastreamento.</p>
+      }
+    </div>
+  </div>
+</section>
