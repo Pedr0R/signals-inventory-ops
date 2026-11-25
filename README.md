@@ -32,3 +32,7 @@ npm start       # Inicia o servidor de desenvolvimento em http://localhost:4200
 npm run build   # Gera o build de produção em dist/
 npm test        # Executa a suíte de testes unitários e de integração com Vitest
 ```
+
+## Evolução Fullstack
+
+Este projeto seguirá com **Spring Boot + PostgreSQL** no backend. O detalhamento das integrações, portas e fases planejadas está registrado em [`docs/roadmap-fullstack.md`](docs/roadmap-fullstack.md).
