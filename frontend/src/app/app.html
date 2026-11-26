@@ -1,0 +1,46 @@
+<div class="app-shell">
+  <header class="topbar">
+    <div>
+      <div class="brand-row">
+        <h1 class="brand-title">SignalOrder</h1>
+        <span class="zoneless-tag">Angular 21 · Zoneless Signals</span>
+      </div>
+      <p class="brand-subtitle">
+        Painel de Gestão de Pedidos, Carrinho Inteligente e Controle de Estoque em Tempo Real
+      </p>
+    </div>
+
+    <div class="topbar-right">
+      <nav class="nav-tabs" aria-label="Navegação principal">
+        <a
+          routerLink="/"
+          routerLinkActive="nav-tab-active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="nav-tab"
+        >
+          Operação
+        </a>
+        <a routerLink="/historico" routerLinkActive="nav-tab-active" class="nav-tab">
+          Histórico
+          <span class="nav-count">{{ store.movementCount() }}</span>
+        </a>
+      </nav>
+
+      <div class="topbar-actions">
+        <button
+          type="button"
+          class="btn"
+          [class.btn-primary]="store.liveWarehouseSync()"
+          (click)="store.toggleLiveWarehouseSync()"
+        >
+          {{ store.liveWarehouseSync() ? 'Pausar Armazém ao Vivo' : 'Simular Armazém ao Vivo' }}
+        </button>
+        <button type="button" class="btn btn-ghost" (click)="store.resetDemoState()">
+          Restaurar Demo
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <router-outlet />
+</div>

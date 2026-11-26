@@ -2,44 +2,40 @@
 
 ## Decisão Arquitetural
 
-O **signals-inventory-ops** será evoluído para uma arquitetura fullstack utilizando:
+O **signals-inventory-ops** adota uma arquitetura fullstack separada por camadas na raiz do repositório:
 
-- **Backend**: Java + **Spring Boot** (API REST + Server-Sent Events).
-- **Banco de Dados**: **PostgreSQL** com migrações versionadas via **Flyway**.
-- **Frontend**: Angular 21 (zoneless + Signals) conectado às APIs do backend através das portas de domínio já existentes.
-
----
-
-## Mapeamento das Fronteiras no Frontend
-
-As portas definidas em `src/app/core/ports/` permitem substituir as implementações simuladas por adapters HTTP/SSE sem alterar o grafo reativo de `InventoryOrderStore`:
-
-- **`ORDER_TRACKING_GATEWAY`** (`src/app/core/ports/order-tracking.port.ts`):
-  - Substituir `SimulatedOrderTrackingGateway` por um adapter HTTP consumindo `GET /api/orders/{id}/tracking` com suporte a `AbortSignal`, preservando o uso declarativo de `orderTrackingResource` (`resource()`).
-- **Novas Portas de Catálogo e Pedidos**:
-  - `CatalogGateway`: `GET /api/products` e `PATCH /api/products/{id}/stock`.
-  - `OrderCommandGateway`: `POST /api/orders` e `GET /api/orders`.
-- **Sincronização de Estoque em Tempo Real**:
-  - Substituir o simulador `liveWarehouseSync` (`effect` + `setInterval`) por assinatura **SSE** (`SseEmitter` / WebFlux) emitindo alterações de estoque que atualizam `catalogSignal` em tempo real.
+- **Frontend (`frontend/`)**: Angular 21 (zoneless + Signals + Router) com telas de **Operação** (`/`) e **Histórico** (`/historico`).
+- **Backend (`backend/`)**: Java 21 + **Spring Boot** (API REST, JPA, Bean Validation, Flyway e Actuator).
+- **Banco de Dados (`database/` + Flyway)**: **PostgreSQL 16** com versionamento de schema e carga inicial.
+- **Containerização (`docker-compose.yml`)**: serviços `postgres`, `backend` e `frontend` conectados na rede `signals-net` com healthchecks.
 
 ---
 
-## Fases de Evolução
+## O que já está estruturado
 
-### Fase 1 — API REST + PostgreSQL
-- Modelar tabelas `products`, `orders`, `order_items` e `tracking_events` com Flyway.
-- Revalidar no servidor regras de precificação, cupons (`SIGNALS10`, `VIP20`, `FRETEGRATIS`), frete regional e impostos.
-- Garantir baixa atômica de estoque na emissão de pedidos com controle de concorrência (`@Version` otimista ou `SELECT ... FOR UPDATE`).
+- **Schema e Migrações Flyway (`backend/src/main/resources/db/migration/`)**:
+  - `V1__create_inventory_and_movements.sql`: tabelas `products` (com `@Version` para lock otimista) e `system_movements`.
+  - `V2__seed_initial_catalog_and_movements.sql`: catálogo e movimentações iniciais.
+- **Endpoints iniciais no Backend**:
+  - `GET /api/products` e `PATCH /api/products/{id}/stock` (baixa/reposição transacional gerando registro automático em `system_movements`).
+  - `GET /api/movements` (com filtros opcionais `category` e `direction`) e `POST /api/movements`.
+  - `GET /actuator/health`.
+- **Fronteiras no Frontend (`frontend/src/app/core/ports/`)**:
+  - `STORAGE_PORT` e `ORDER_TRACKING_GATEWAY` desacoplados da `InventoryOrderStore`.
 
-### Fase 2 — Tempo Real via SSE
-- Expor endpoint SSE (`/api/inventory/events`) publicando atualizações de saldo de armazém e transições de rastreamento.
-- Integrar o stream no Angular atualizando `catalogSignal` para disparar automaticamente `inventoryMetrics`, `hasStockConflicts` e `canSubmitOrder`.
+---
+
+## Próximas Fases de Evolução
+
+### Fase 1 — Integração HTTP Completa de Catálogo, Pedidos e Histórico
+- Criar adapters HTTP no Angular para `CatalogGateway`, `OrderCommandGateway` e `MovementGateway` consumindo `/api/products`, `/api/orders` e `/api/movements`.
+- Implementar persistência de pedidos (`orders` e `order_items`) no Spring Boot com validação server-side de cupons, frete e impostos.
+
+### Fase 2 — Tempo Real via Server-Sent Events (SSE)
+- Expor endpoint SSE (`/api/inventory/events`) no Spring Boot publicando alterações de estoque e movimentações em tempo real.
+- Substituir o simulador `liveWarehouseSync` (`effect` + `setInterval`) pela assinatura do stream SSE atualizando `catalogSignal` e `movementsSignal`.
 
 ### Fase 3 — Autenticação e Perfis
 - Configurar Spring Security + JWT diferenciando papéis:
   - `WAREHOUSE_OPERATOR`: reposição e ajuste manual de estoque.
   - `BUYER`: montagem, emissão e acompanhamento de pedidos.
-
-### Fase 4 — Infraestrutura e CI
-- Adicionar `docker-compose.yml` orquestrando Angular, Spring Boot e PostgreSQL.
-- Configurar pipeline de CI no GitHub Actions executando build e testes automatizados de frontend e backend.

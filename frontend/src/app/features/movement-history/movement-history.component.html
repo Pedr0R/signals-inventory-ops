@@ -1,0 +1,162 @@
+<section class="history-stack" aria-label="Histórico de movimentações do sistema">
+  <section class="history-kpis" aria-label="Resumo das movimentações filtradas">
+    <article class="kpi-card">
+      <span class="kpi-label">Registros Encontrados</span>
+      <strong class="kpi-value">{{ metrics().totalMovements }}</strong>
+      <span class="sig-pill sig-computed">computed</span>
+    </article>
+
+    <article class="kpi-card">
+      <span class="kpi-label">Entradas de Estoque</span>
+      <strong class="kpi-value kpi-in">+{{ metrics().stockInUnits }} un.</strong>
+      <span class="sig-pill sig-computed">computed</span>
+    </article>
+
+    <article class="kpi-card">
+      <span class="kpi-label">Saídas de Estoque</span>
+      <strong class="kpi-value kpi-out">-{{ metrics().stockOutUnits }} un.</strong>
+      <span class="sig-pill sig-computed">computed</span>
+    </article>
+
+    <article class="kpi-card">
+      <span class="kpi-label">Volume em Pedidos ({{ metrics().ordersCount }})</span>
+      <strong class="kpi-value">{{ formatPrice(metrics().totalMovedCents) }}</strong>
+      <span class="sig-pill sig-computed">computed</span>
+    </article>
+  </section>
+
+  <section class="panel-card">
+    <header class="panel-header">
+      <div>
+        <h2 class="panel-title">Histórico de Movimentações</h2>
+        <p class="panel-subtitle">
+          Auditoria completa de estoque, carrinho, pedidos, logística e eventos do sistema
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-sm btn-ghost"
+        [disabled]="store.movements().length === 0"
+        (click)="clearHistory()"
+      >
+        Limpar histórico
+      </button>
+    </header>
+
+    <div class="history-filters" role="search" aria-label="Filtros do histórico">
+      <input
+        type="search"
+        class="field-control"
+        placeholder="Buscar por descrição, SKU ou pedido..."
+        [value]="searchQuery()"
+        (input)="onSearchInput($event)"
+        aria-label="Buscar movimentações"
+      />
+
+      <select class="field-control" [value]="categoryFilter()" (change)="onCategoryChange($event)" aria-label="Filtrar por categoria">
+        <option value="all">Todas categorias</option>
+        <option value="estoque">Estoque</option>
+        <option value="pedido">Pedido</option>
+        <option value="carrinho">Carrinho</option>
+        <option value="logistica">Logística</option>
+        <option value="sistema">Sistema</option>
+      </select>
+
+      <select class="field-control" [value]="directionFilter()" (change)="onDirectionChange($event)" aria-label="Filtrar por direção">
+        <option value="all">Todas direções</option>
+        <option value="entrada">Entradas</option>
+        <option value="saida">Saídas</option>
+        <option value="neutro">Neutro</option>
+      </select>
+
+      <select class="field-control" [value]="sourceFilter()" (change)="onSourceChange($event)" aria-label="Filtrar por origem">
+        <option value="all">Todas origens</option>
+        <option value="manual">Manual</option>
+        <option value="armazem-ao-vivo">Armazém ao vivo</option>
+        <option value="sistema">Sistema</option>
+      </select>
+
+      <button type="button" class="btn btn-ghost" (click)="clearFilters()">
+        Limpar filtros
+      </button>
+    </div>
+
+    @if (paginatedMovements().length === 0) {
+      <div class="empty-history">
+        Nenhuma movimentação encontrada para os critérios selecionados.
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Data / Hora</th>
+              <th>Categoria</th>
+              <th>Direção</th>
+              <th>Movimentação</th>
+              <th>Referência</th>
+              <th>Qtd</th>
+              <th>Valor</th>
+              <th>Origem</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (mov of paginatedMovements(); track mov.id) {
+              <tr>
+                <td class="mono-cell">{{ formatDateTime(mov.timestampIso) }}</td>
+                <td>
+                  <span class="cat-badge" [class]="'cat-' + mov.category">
+                    {{ categoryLabel(mov.category) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="dir-badge" [class]="'dir-' + mov.direction">
+                    {{ directionLabel(mov.direction) }}
+                  </span>
+                </td>
+                <td>
+                  <strong class="mov-title">{{ mov.title }}</strong>
+                  <div class="mov-details">{{ mov.details }}</div>
+                </td>
+                <td class="mono-cell">
+                  {{ mov.sku ?? mov.orderId ?? '—' }}
+                </td>
+                <td class="mono-cell">{{ formatDelta(mov.quantityDelta) }}</td>
+                <td class="mono-cell">{{ formatPrice(mov.amountCents) }}</td>
+                <td>
+                  <span class="source-tag">{{ sourceLabel(mov.source) }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <footer class="history-pagination">
+      <span class="pagination-info">
+        {{ filteredMovements().length }} movimentação(ões) · Página {{ currentPage() }} de {{ totalPages() }}
+        <span class="sig-pill sig-linkedSignal">linkedSignal</span>
+      </span>
+      <div class="pagination-buttons">
+        <button
+          type="button"
+          class="btn btn-sm"
+          [disabled]="currentPage() <= 1"
+          (click)="setPage(currentPage() - 1)"
+        >
+          Anterior
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm"
+          [disabled]="currentPage() >= totalPages()"
+          (click)="setPage(currentPage() + 1)"
+        >
+          Próxima
+        </button>
+      </div>
+    </footer>
+  </section>
+</section>
